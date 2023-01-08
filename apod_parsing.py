@@ -5,15 +5,15 @@ import urllib.parse
 import os
 from PIL import Image, ImageDraw, ImageFont
 
+POD_SAVE_LOCATION = "~/Pictures/Wallpapers"
+
 # if you don't select date it will use today's image of the day.
-#GET_APOD_URL = 'https://api.nasa.gov/planetary/apod?api_key=DEMO_KEY'
-GET_APOD_URL = 'https://api.nasa.gov/planetary/apod?api_key=DEMO_KEY&date=2015-01-02'
+GET_APOD_URL = 'https://api.nasa.gov/planetary/apod?api_key=DEMO_KEY'
+# GET_APOD_URL = 'https://api.nasa.gov/planetary/apod?api_key=DEMO_KEY&date=2017-07-27'
 # some test cases for the screen resolution
 # date=2022-12-20' # Thor's Helmet (2048x1433)
 # date=2022-12-19' # The Tadpole Nebula in Gas and Dust (2560x2048)
-#
-# the image to download. for testing faster use url not hdurl
-IMAGE_URL_TYPE = "hdurl"
+
 
 class Watermark:
     def __init__(self, cpyright=None, date=None, title=None, url=None):
@@ -52,12 +52,8 @@ def parse_metadata_to_watermark(image_meta_data):
     return watermark
 
 
-class PictureOfTheDay:
-    image_meta_data = json.loads(req.get(GET_APOD_URL).text)
-    Watermark = parse_metadata_to_watermark(image_meta_data)
-    image_url = image_meta_data[IMAGE_URL_TYPE]
-    img_data = req.get(image_url).content
-    image_name = get_filename_from_image_metadata(image_meta_data[IMAGE_URL_TYPE])
+def save_the_image_to_disk(image_name, Watermark, save_location=POD_SAVE_LOCATION):
+    img_data = req.get(Watermark.url).content
     with open(image_name, 'wb') as handler:
         watermark = f"Astronomy Picture of the Day (apod.nasa.gov)\n{Watermark.title} " \
                     f"[{Watermark.date}]\nCopyright: {Watermark.cpyright}\n"
@@ -69,7 +65,7 @@ class PictureOfTheDay:
         w, h = img.size
         print(f"Image width {w} and height {h}")
         I1 = ImageDraw.Draw(img)
-        font = ImageFont.truetype(font_face, int(h/100))
+        font = ImageFont.truetype(font_face, int(h / 100))
         I1.text(
             (50, h - h / 5),
             watermark,
@@ -77,9 +73,16 @@ class PictureOfTheDay:
             fill=fill
         )
         # img.show()
-        img.save(image_name)
-        print(f"The image has been saved {image_name}")
+        image_name = (f"{image_name}.jpg")
+        img.save(fp=image_name, Path=save_location)
+        print(f"The image {image_name} has been saved at {save_location}")
+        return image_name
 
+
+class PictureOfTheDay:
+    image_meta_data = json.loads(req.get(GET_APOD_URL).text)
+    Watermark = parse_metadata_to_watermark(image_meta_data)
+    image_name = save_the_image_to_disk(Watermark.title.replace(" ", "-"), Watermark)
     RunPywal(image_name)
 
 
