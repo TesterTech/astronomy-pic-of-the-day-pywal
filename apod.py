@@ -96,10 +96,14 @@ def send_dunst_message(message_text):
 
 class PictureOfTheDay:
     image_meta_data = json.loads(req.get(GET_APOD_URL).text)
-    Watermark = parse_metadata_to_watermark(image_meta_data)
-    image_name = save_the_image_to_disk(
-        Watermark.title.replace(" ", "-"), Watermark)
-    RunPywal(image_name)
+    media_type = image_meta_data["media_type"]
+    if media_type!="image":
+        print(f"Error Pic of the day is not image, it's {media_type}")
+    else:
+        Watermark = parse_metadata_to_watermark(image_meta_data)
+        image_name = save_the_image_to_disk(
+            Watermark.title.replace(" ", "-"), Watermark)
+        RunPywal(image_name)
 
 
 if __name__ == '__main__':
